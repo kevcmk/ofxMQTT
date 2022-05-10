@@ -1,17 +1,15 @@
 /*
-Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License 2.0
+are made available under the terms of the Eclipse Public License v1.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
-
+ 
 The Eclipse Public License is available at
-   https://www.eclipse.org/legal/epl-2.0/
+   http://www.eclipse.org/legal/epl-v10.html
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
-
-SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
-
+ 
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -43,19 +41,29 @@ static unsigned long max_memcount = 0;
 static size_t mem_limit = 0;
 void memory__set_limit(size_t lim)
 {
+#ifdef LINUX
+	struct rlimit r;
+
+	r.rlim_cur = lim;
+	r.rlim_max = lim;
+
+	setrlimit(RLIMIT_CPU, &r);
+
+	mem_limit = 0;
+#else
 	mem_limit = lim;
+#endif
 }
 #endif
 
 void *mosquitto__calloc(size_t nmemb, size_t size)
 {
-	void *mem;
 #ifdef REAL_WITH_MEMORY_TRACKING
 	if(mem_limit && memcount + size > mem_limit){
 		return NULL;
 	}
 #endif
-	mem = calloc(nmemb, size);
+	void *mem = calloc(nmemb, size);
 
 #ifdef REAL_WITH_MEMORY_TRACKING
 	if(mem){
@@ -82,15 +90,12 @@ void mosquitto__free(void *mem)
 
 void *mosquitto__malloc(size_t size)
 {
-	void *mem;
-
 #ifdef REAL_WITH_MEMORY_TRACKING
 	if(mem_limit && memcount + size > mem_limit){
 		return NULL;
 	}
 #endif
-
-	mem = malloc(size);
+	void *mem = malloc(size);
 
 #ifdef REAL_WITH_MEMORY_TRACKING
 	if(mem){
@@ -118,11 +123,13 @@ unsigned long mosquitto__max_memory_used(void)
 
 void *mosquitto__realloc(void *ptr, size_t size)
 {
-	void *mem;
 #ifdef REAL_WITH_MEMORY_TRACKING
 	if(mem_limit && memcount + size > mem_limit){
 		return NULL;
 	}
+#endif
+	void *mem;
+#ifdef REAL_WITH_MEMORY_TRACKING
 	if(ptr){
 		memcount -= malloc_usable_size(ptr);
 	}
@@ -143,13 +150,12 @@ void *mosquitto__realloc(void *ptr, size_t size)
 
 char *mosquitto__strdup(const char *s)
 {
-	char *str;
 #ifdef REAL_WITH_MEMORY_TRACKING
 	if(mem_limit && memcount + strlen(s) > mem_limit){
 		return NULL;
 	}
 #endif
-	str = strdup(s);
+	char *str = strdup(s);
 
 #ifdef REAL_WITH_MEMORY_TRACKING
 	if(str){
@@ -162,3 +168,4 @@ char *mosquitto__strdup(const char *s)
 
 	return str;
 }
+

@@ -1,17 +1,15 @@
 /*
-Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
-are made available under the terms of the Eclipse Public License 2.0
+are made available under the terms of the Eclipse Public License v1.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
-
+ 
 The Eclipse Public License is available at
-   https://www.eclipse.org/legal/epl-2.0/
+   http://www.eclipse.org/legal/epl-v10.html
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
-
-SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
-
+ 
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -26,7 +24,7 @@ Contributors:
 #include "logging_mosq.h"
 #include "memory_mosq.h"
 #include "messages_mosq.h"
-#include "mqtt_protocol.h"
+#include "mqtt3_protocol.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "read_handle.h"
@@ -39,30 +37,26 @@ int handle__packet(struct mosquitto *mosq)
 	assert(mosq);
 
 	switch((mosq->in_packet.command)&0xF0){
-		case CMD_PINGREQ:
+		case PINGREQ:
 			return handle__pingreq(mosq);
-		case CMD_PINGRESP:
+		case PINGRESP:
 			return handle__pingresp(mosq);
-		case CMD_PUBACK:
+		case PUBACK:
 			return handle__pubackcomp(mosq, "PUBACK");
-		case CMD_PUBCOMP:
+		case PUBCOMP:
 			return handle__pubackcomp(mosq, "PUBCOMP");
-		case CMD_PUBLISH:
+		case PUBLISH:
 			return handle__publish(mosq);
-		case CMD_PUBREC:
+		case PUBREC:
 			return handle__pubrec(mosq);
-		case CMD_PUBREL:
-			return handle__pubrel(mosq);
-		case CMD_CONNACK:
+		case PUBREL:
+			return handle__pubrel(NULL, mosq);
+		case CONNACK:
 			return handle__connack(mosq);
-		case CMD_SUBACK:
+		case SUBACK:
 			return handle__suback(mosq);
-		case CMD_UNSUBACK:
+		case UNSUBACK:
 			return handle__unsuback(mosq);
-		case CMD_DISCONNECT:
-			return handle__disconnect(mosq);
-		case CMD_AUTH:
-			return handle__auth(mosq);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
 			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);
