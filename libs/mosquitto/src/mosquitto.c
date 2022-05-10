@@ -22,6 +22,9 @@ Contributors:
 #ifndef WIN32
 #include <sys/time.h>
 #endif
+#if defined(__APPLE__)
+#include <mach/mach_time.h>
+#endif
 
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
